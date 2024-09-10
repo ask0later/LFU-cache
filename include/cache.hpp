@@ -46,19 +46,13 @@ public:
                         min_it = it;
                     }
                 }
-                std::cout << "MIN IT " << "key = " << std::get<0>(*min_it) << " counter = " << std::get<2>(*min_it) << std::endl;
-
-                hash_map_.erase(min_counter);
+            
+                hash_map_.erase(std::get<0>(*min_it));
                 cache_.erase(min_it);
             }
             
             cache_.emplace_front(key, slow_get_page(key), 1);
             hash_map_.emplace(key, cache_.begin());
-
-            for (auto it = cache_.begin(); it != cache_.end(); it = std::next(it))
-            {
-                std::cout << " 1 key = " << std::get<0>(*it) << " counter = " << std::get<2>(*it) << std::endl;
-            }
 
             return false;
         }
@@ -71,11 +65,6 @@ public:
         if (list_it != cache_.begin())
         {
             cache_.splice(cache_.begin(), cache_, list_it, std::next(list_it));
-        }
-
-        for (auto it = cache_.begin(); it != cache_.end(); it = std::next(it))
-        {
-            std::cout << " 2 key = " << std::get<0>(*it) << " counter = " << std::get<2>(*it) << std::endl;
         }
 
         return true;
