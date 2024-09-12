@@ -1,11 +1,10 @@
 #include "cache.hpp"
 #include <iostream>
+#include <functional>
 
-int slow_get_page(int key)
-{
-    std::cout << "foo\n";
-    return key;
-}
+int slow_get_page(int key);
+
+using func_t = int(int);
 
 int main()
 {
@@ -13,7 +12,7 @@ int main()
 
     std::cin >> cache_size >> request_nums;
 
-    caches::LFUCache<int> cache{cache_size};
+    caches::LFUCache<int, int(int)> cache{cache_size};
 
     int request_key = 0;
     for (size_t i = 0; i < request_nums; i++)
@@ -24,7 +23,12 @@ int main()
             lfu_hits++;
     }
     
-    std::cout << "LFU hits = " << lfu_hits << "/" << request_nums << std::endl;
+    std::cout << lfu_hits << std::endl;
 
     return 0;
+}
+
+int slow_get_page(int key)
+{
+    return key;
 }
