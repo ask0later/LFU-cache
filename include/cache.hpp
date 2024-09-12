@@ -3,7 +3,10 @@
 #include <list>
 #include <unordered_map>
 #include <iterator>
+#include <vector>
+
 #include <iostream>
+#include <cassert>
 
 namespace caches
 {
@@ -13,11 +16,10 @@ namespace caches
     template <typename T, typename F, typename ListElem_t, typename KeyT = int>
     class Cache
     {
-public:
+protected:
         using ListIt    = typename std::list<ListElem_t>::iterator;
         using HashMapIt = typename std::unordered_map<KeyT, ListIt>::iterator;
 
-protected:
         size_t size_;
         std::list<ListElem_t> cache_;
         std::unordered_map<KeyT, ListIt> hash_map_;
@@ -45,11 +47,12 @@ public:
         using caches::Cache<T, F, ListElem_t>::hash_map_;
         using caches::Cache<T, F, ListElem_t>::cache_;
 
-        // using caches::Cache<T, F, ListElem_t>::ListIt;
+        using caches::Cache<T, F, ListElem_t>::ListIt;
 
-        // хз надо или нет
+
         // using ListIt    = typename std::list<ListElem_t>::iterator;
         // using HashMapIt = typename std::unordered_map<KeyT, ListIt>::iterator;
+
 
 public:
         bool lookup_update(KeyT key, F slow_get_page) override
@@ -105,11 +108,12 @@ public:
 
     };
 
+
 // 
 // Ideal Cache Class 
 //
     template <typename T, typename F, typename KeyT = int>
-    class IdealCache : public Cache<T, F, std::pair<KeyT, T>>
+    class IdealCache : public Cache<T, F, std::pair<KeyT, T>, KeyT>
     {
         using ListElem_t = typename std::pair<KeyT, T>;
         
@@ -117,19 +121,9 @@ public:
         using caches::Cache<T, F, ListElem_t>::full;
         using caches::Cache<T, F, ListElem_t>::hash_map_;
         using caches::Cache<T, F, ListElem_t>::cache_;
-    
-        std::list<KeyT> request_list_;
+
+        std::vector<KeyT> request_list_;
         size_t request_num_;
-        
-        void inquire_request()
-        {
-            KeyT key = 0;
-            for (size_t i = 0; i < request_num_; i++)
-            {
-                std::cin >> key;
-                request_list_.push_back(key);
-            }
-        }
 
         KeyT find_last_seen()
         {
@@ -137,20 +131,22 @@ public:
                     
             for (auto it = cache_.begin(); it != cache_.end(); it = std::next(it))
             {
-                temp_list.push_back(std::get<0>(*it));
+                KeyT key = std::get<0>(*it);
+                temp_list.push_back(key);
             }
 
             auto request_it = request_list_.begin();
             
             auto it = temp_list.begin();
             
-            while (temp_list.size() != 1 && request_it != request_list_.end())
+            while (temp_list.size() > 1 && request_it != request_list_.end())
             {
                 for (it = temp_list.begin(); it != temp_list.end(); it = std::next(it))
                 {
                     if (*it == *request_it)
                     {
                         temp_list.erase(it);
+                        break;
                     }
                 }
                 
@@ -159,14 +155,11 @@ public:
 
             return *it;
         }
-
     public:
-        IdealCache(size_t size, size_t request_num) : Cache<T, F, KeyT>(size), request_num_(request_num) { inquire_request(); }
+        IdealCache(size_t size, std::vector<KeyT> request_list) : Cache<T, F, ListElem_t, KeyT>(size), request_list_(request_list) {}
 
-        bool lookup_update(KeyT key, F slow_get_page) override
+        bool lookup_update(KeyT key, F slow_get_page) override        
         {
-            key = request_list_.pop_front(); /// I AM SO SORRY
-            
             auto hit = hash_map_.find(key);
             
             if (hit == hash_map_.end()) // key not found
@@ -185,7 +178,7 @@ public:
                     }
                 }
                 
-                cache_.emplace_front(key, slow_get_page(key), 1);
+                cache_.emplace_front(key, slow_get_page(key));
                 hash_map_.emplace(key, cache_.begin());
 
                 return false;
@@ -193,7 +186,9 @@ public:
             
             return true;  
         }
-    }; // IdealCache
+
+    }; // Ideal Cache class
+
 
 // 
 // LRU Cache Class 
@@ -240,39 +235,29 @@ public:
 
 /*
 
-        KeyT     get_key(ListIt it) { return std::get<0>(*it); }
+KeyT     get_key(ListIt it) { return std::get<0>(*it); }
+T       get_data(ListIt it) { return std::get<1>(*it); }
+size_t get_count(ListIt it) { return std::get<2>(*it); }
 
-        T       get_data(ListIt it) { return std::get<1>(*it); }
+++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-        size_t get_count(ListIt it) { return std::get<2>(*it); }
+KeyT      get_key(HashMapIt it) { return std::get<0>(*it); }
 
-        ++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-        KeyT      get_key(HashMapIt it) { return std::get<0>(*it); }
-
-        ListIt get_ListIt(HashMapIt it) { return std::get<1>(*it); }
+ListIt get_ListIt(HashMapIt it) { return std::get<1>(*it); }
 
 */
 
-
-/*
-
-
-*/
-
-
-        // void print() const
-        // {
-        //     std::cout << "Hash map:" << std::endl << "keys:";
-        //     for (auto hash_it = hash_map_.begin(); hash_it != hash_map_.end(); hash_it = std::next(hash_it))
-        //     {
-        //         std::cout << " " << get_key(*hash_it);
-        //     }
-        //     std::cout << std::endl;
-
-        //     std::cout << "List(Cache):" << std::endl << "keys\tcounter" << std::endl;
-        //     for (auto list_it = cache_.begin(); list_it != cache_.end(); list_it = std::next(list_it))
-        //     {
-        //         std::cout << get_key(*list_it) << "\t" << get_counter(*list_it) << std::endl;
-        //     }
-        // }
+// void print() const
+// {
+//     std::cout << "Hash map:" << std::endl << "keys:";
+//     for (auto hash_it = hash_map_.begin(); hash_it != hash_map_.end(); hash_it = std::next(hash_it))
+//     {
+//         std::cout << " " << get_key(*hash_it);
+//     }
+//     std::cout << std::endl;
+//     std::cout << "List(Cache):" << std::endl << "keys\tcounter" << std::endl;
+//     for (auto list_it = cache_.begin(); list_it != cache_.end(); list_it = std::next(list_it))
+//     {
+//         std::cout << get_key(*list_it) << "\t" << get_counter(*list_it) << std::endl;
+//     }
+// }
