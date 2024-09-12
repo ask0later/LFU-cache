@@ -12,18 +12,25 @@ int main()
 
     std::cin >> cache_size >> request_nums;
 
-    caches::LFUCache<int, int(int)> cache{cache_size};
+    caches::LFUCache<int, int(int)> lfu_cache{cache_size};
+    caches::LRUCache<int, int(int)> lru_cache{cache_size};
 
     int request_key = 0;
     for (size_t i = 0; i < request_nums; i++)
     {
         std::cin >> request_key;
         
-        if (cache.lookup_update(request_key, slow_get_page))
+        if (lfu_cache.lookup_update(request_key, slow_get_page))
             lfu_hits++;
+        if (lru_cache.lookup_update(request_key, slow_get_page))
+            lru_hits++;
     }
-    
+
     std::cout << lfu_hits << std::endl;
+    std::cout << lru_hits << std::endl;
+
+
+     caches::IdealCache<int, int(int)> lru_cache{cache_size};
 
     return 0;
 }
