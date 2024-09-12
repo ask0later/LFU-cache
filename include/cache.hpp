@@ -6,7 +6,6 @@
 #include <vector>
 
 #include <iostream>
-#include <cassert>
 
 namespace caches
 {
@@ -16,10 +15,12 @@ namespace caches
     template <typename T, typename F, typename ListElem_t, typename KeyT = int>
     class Cache
     {
-protected:
+public:
+        using aboba     = typename std::list<int>;
         using ListIt    = typename std::list<ListElem_t>::iterator;
         using HashMapIt = typename std::unordered_map<KeyT, ListIt>::iterator;
 
+protected:
         size_t size_;
         std::list<ListElem_t> cache_;
         std::unordered_map<KeyT, ListIt> hash_map_;
@@ -31,7 +32,7 @@ public:
 
         virtual bool lookup_update(KeyT key, F slow_get_page) {}
     
-        virtual void print() const {}
+        virtual void print() {}
     };
 
 // 
@@ -41,20 +42,23 @@ public:
     class LFUCache : public Cache<T, F, std::tuple<KeyT, T, size_t>, KeyT>
     {
         using ListElem_t = typename std::tuple<KeyT, T, size_t>;
-        
+
         using caches::Cache<T, F, ListElem_t>::Cache;
         using caches::Cache<T, F, ListElem_t>::full;
         using caches::Cache<T, F, ListElem_t>::hash_map_;
         using caches::Cache<T, F, ListElem_t>::cache_;
 
-        using caches::Cache<T, F, ListElem_t>::ListIt;
+        using ListIt    = typename std::list<ListElem_t>::iterator;
+        using HashMapIt = typename std::unordered_map<KeyT, ListIt>::iterator;
 
+        KeyT      get_key(ListIt it) { return std::get<0>(*it); }
+        T        get_data(ListIt it) { return std::get<1>(*it); }
+        size_t& get_count(ListIt it) { return std::get<2>(*it); }
 
-        // using ListIt    = typename std::list<ListElem_t>::iterator;
-        // using HashMapIt = typename std::unordered_map<KeyT, ListIt>::iterator;
+        KeyT        get_key(HashMapIt it) { return std::get<0>(*it); }
+        ListIt   get_ListIt(HashMapIt it) { return std::get<1>(*it); }
 
-
-public:
+    public:
         bool lookup_update(KeyT key, F slow_get_page) override
         {
             auto hit = hash_map_.find(key);
@@ -63,25 +67,8 @@ public:
             {
                 if (this->full())
                 {
-                    // LFU algoritm
-
-                    // find min
-                    auto it = cache_.begin();
-                    auto min_it = it;
-
-                    size_t min_counter = std::get<2>(*it);
-                    for (; it != cache_.end(); it = std::next(it))
-                    {
-                        size_t counter = std::get<2>(*it);
-                        if (min_counter > counter)
-                        {
-                            min_counter = counter;
-                            min_it = it;
-                        }
-                    }
-
-                    hash_map_.erase(std::get<0>(*min_it));
-                    cache_.erase(min_it);
+                    hash_map_.erase(get_key(cache_.begin()));
+                    cache_.erase(cache_.begin());
                 }
 
                 cache_.emplace_front(key, slow_get_page(key), 1);
@@ -92,20 +79,34 @@ public:
 
             // key found
             auto list_it = hit->second;
-            std::get<2>(*list_it) += 1;
+            get_count(list_it) += 1;
 
             // exchange assending
             auto next_it = std::next(list_it);
 
             if (next_it != cache_.begin() && next_it != cache_.end())
             {
-                if (std::get<2>(*list_it) > std::get<2>(*next_it))
+                if (get_count(list_it) > get_count(next_it))
                     cache_.splice(list_it, cache_, next_it, std::next(next_it));
             }
 
             return true;
         }
 
+        void print() override
+        {
+            std::cout << "Hash map:" << std::endl << "keys:";
+            for (HashMapIt hash_it = hash_map_.begin(); hash_it != hash_map_.end(); hash_it = std::next(hash_it))
+            {
+                std::cout << " " << get_key(hash_it);
+            }
+            std::cout << std::endl;
+            std::cout << "List(Cache):" << std::endl << "keys\tcounter" << std::endl;
+            for (auto list_it = cache_.begin(); list_it != cache_.end(); list_it = std::next(list_it))
+            {
+                std::cout << get_key(list_it) << "\t" << get_count(list_it) << std::endl;
+            }
+        }
     };
 
 
@@ -131,7 +132,7 @@ public:
                     
             for (auto it = cache_.begin(); it != cache_.end(); it = std::next(it))
             {
-                KeyT key = std::get<0>(*it);
+                KeyT key = it->first;
                 temp_list.push_back(key);
             }
 
@@ -170,9 +171,9 @@ public:
                     
                     for (auto it = cache_.end(); it != cache_.end(); it = std::next(it))
                     {
-                        if (key == std::get<0>(*it))
+                        if (key == it->first)
                         {
-                            hash_map_.erase(std::get<0>(*it));
+                            hash_map_.erase(it->first);
                             cache_.erase(it);
                         }
                     }
@@ -231,33 +232,3 @@ public:
     }; // LRUCache class
 
 } // namespace cache
-
-
-/*
-
-KeyT     get_key(ListIt it) { return std::get<0>(*it); }
-T       get_data(ListIt it) { return std::get<1>(*it); }
-size_t get_count(ListIt it) { return std::get<2>(*it); }
-
-++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-KeyT      get_key(HashMapIt it) { return std::get<0>(*it); }
-
-ListIt get_ListIt(HashMapIt it) { return std::get<1>(*it); }
-
-*/
-
-// void print() const
-// {
-//     std::cout << "Hash map:" << std::endl << "keys:";
-//     for (auto hash_it = hash_map_.begin(); hash_it != hash_map_.end(); hash_it = std::next(hash_it))
-//     {
-//         std::cout << " " << get_key(*hash_it);
-//     }
-//     std::cout << std::endl;
-//     std::cout << "List(Cache):" << std::endl << "keys\tcounter" << std::endl;
-//     for (auto list_it = cache_.begin(); list_it != cache_.end(); list_it = std::next(list_it))
-//     {
-//         std::cout << get_key(*list_it) << "\t" << get_counter(*list_it) << std::endl;
-//     }
-// }
