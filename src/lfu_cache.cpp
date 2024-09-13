@@ -11,7 +11,7 @@ int main()
 
     std::cin >> cache_size >> request_nums;
 
-    caches::LFUCache<int, int(int)> lfu_cache{cache_size};
+    caches::LFUCache<int, func_t> lfu_cache{cache_size};
 
     int request_key = 0;
     for (size_t i = 0; i < request_nums; i++)

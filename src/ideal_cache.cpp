@@ -20,7 +20,7 @@ int main()
         request_list.push_back(key);
     }
 
-    caches::IdealCache<int, int(int)> ideal_cache{cache_size, request_list};
+    caches::IdealCache<int, func_t> ideal_cache{cache_size, request_list};
     
     for (auto it = request_list.begin(); it != request_list.end(); it = std::next(it))
     {
