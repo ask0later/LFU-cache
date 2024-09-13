@@ -12,7 +12,7 @@ int main()
     std::cin >> cache_size >> request_nums;
 
     int key = 0;
-    std::vector<int> request_list;
+    std::list<int> request_list;
 
     for (size_t i = 0; i < request_nums; i++)
     {
