@@ -16,7 +16,6 @@ namespace caches
     class Cache
     {
 public:
-        using aboba     = typename std::list<int>;
         using ListIt    = typename std::list<ListElem_t>::iterator;
         using HashMapIt = typename std::unordered_map<KeyT, ListIt>::iterator;
 
