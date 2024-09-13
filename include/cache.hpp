@@ -30,9 +30,7 @@ protected:
 public:
         Cache(size_t size) : size_(size) {}
 
-        virtual bool lookup_update(KeyT key, F slow_get_page) {}
-    
-        virtual void print() {}
+        virtual bool lookup_update(KeyT key, F slow_get_page) = 0;
     };
 
 // 
@@ -93,7 +91,7 @@ public:
             return true;
         }
 
-        void print() override
+        void print() 
         {
             std::cout << "Hash map:" << std::endl << "keys:";
             for (HashMapIt hash_it = hash_map_.begin(); hash_it != hash_map_.end(); hash_it = std::next(hash_it))
@@ -169,14 +167,10 @@ public:
                 {
                     KeyT key = find_last_seen();
                     
-                    for (auto it = cache_.end(); it != cache_.end(); it = std::next(it))
-                    {
-                        if (key == it->first)
-                        {
-                            hash_map_.erase(it->first);
-                            cache_.erase(it);
-                        }
-                    }
+                    auto hit = hash_map_.find(key);
+
+                    hash_map_.erase(key);
+                    cache_.erase(hit->second);
                 }
                 
                 cache_.emplace_front(key, slow_get_page(key));
