@@ -3,7 +3,6 @@
 #include <list>
 #include <unordered_map>
 #include <iterator>
-#include <vector>
 
 #include <iostream>
 
@@ -25,9 +24,11 @@ protected:
         std::unordered_map<KeyT, ListIt> hash_map_;
 
         bool full() { return cache_.size() == size_; }
-
 public:
         Cache(size_t size) : size_(size) {}
+
+        KeyT        get_key(HashMapIt it) { return std::get<0>(*it); }
+        ListIt   get_ListIt(HashMapIt it) { return std::get<1>(*it); }
 
         virtual bool lookup_update(KeyT key, F slow_get_page) = 0;
     };
@@ -44,16 +45,14 @@ public:
         using caches::Cache<T, F, ListElem_t>::full;
         using caches::Cache<T, F, ListElem_t>::hash_map_;
         using caches::Cache<T, F, ListElem_t>::cache_;
+        using caches::Cache<T, F, ListElem_t>::get_key;
+        using caches::Cache<T, F, ListElem_t>::get_ListIt;
 
         using ListIt    = typename std::list<ListElem_t>::iterator;
-        using HashMapIt = typename std::unordered_map<KeyT, ListIt>::iterator;
 
         KeyT      get_key(ListIt it) { return std::get<0>(*it); }
         T        get_data(ListIt it) { return std::get<1>(*it); }
         size_t& get_count(ListIt it) { return std::get<2>(*it); }
-
-        KeyT        get_key(HashMapIt it) { return std::get<0>(*it); }
-        ListIt   get_ListIt(HashMapIt it) { return std::get<1>(*it); }
 
     public:
         bool lookup_update(KeyT key, F slow_get_page) override
@@ -93,7 +92,7 @@ public:
         void print() 
         {
             std::cout << "Hash map:" << std::endl << "keys:";
-            for (HashMapIt hash_it = hash_map_.begin(); hash_it != hash_map_.end(); hash_it = std::next(hash_it))
+            for (auto hash_it = hash_map_.begin(); hash_it != hash_map_.end(); hash_it = std::next(hash_it))
             {
                 std::cout << " " << get_key(hash_it);
             }
@@ -114,36 +113,43 @@ public:
     class IdealCache : public Cache<T, F, std::pair<KeyT, T>, KeyT>
     {
         using ListElem_t = typename std::pair<KeyT, T>;
-        
+
         using caches::Cache<T, F, ListElem_t>::Cache;
         using caches::Cache<T, F, ListElem_t>::full;
         using caches::Cache<T, F, ListElem_t>::hash_map_;
         using caches::Cache<T, F, ListElem_t>::cache_;
+        using caches::Cache<T, F, ListElem_t>::get_key;
+        using caches::Cache<T, F, ListElem_t>::get_ListIt;
 
-        std::vector<KeyT> request_list_;
+        std::list<KeyT> request_list_;
         size_t request_num_;
 
-        KeyT find_last_seen()
+        using ListIt    = typename std::list<ListElem_t>::iterator;
+
+        KeyT get_key(ListIt it) { return std::get<0>(*it); }
+        
+
+        KeyT find_last_seen(KeyT request_key)
         {
             std::list<KeyT> temp_list;
-                    
-            for (auto it = cache_.begin(); it != cache_.end(); it = std::next(it))
+            temp_list.push_back(request_key);
+
+            for (auto temp_it = cache_.begin(); temp_it != cache_.end(); temp_it = std::next(temp_it))
             {
-                KeyT key = it->first;
+                KeyT key = temp_it->first;
                 temp_list.push_back(key);
             }
-
-            auto request_it = request_list_.begin();
             
-            auto it = temp_list.begin();
+            auto temp_it = temp_list.begin();
+            auto request_it = request_list_.begin();
             
             while (temp_list.size() > 1 && request_it != request_list_.end())
             {
-                for (it = temp_list.begin(); it != temp_list.end(); it = std::next(it))
+                for (temp_it = temp_list.begin(); temp_it != temp_list.end(); temp_it = std::next(temp_it))
                 {
-                    if (*it == *request_it)
+                    if (*temp_it == *request_it)
                     {
-                        temp_list.erase(it);
+                        temp_list.erase(temp_it);
                         break;
                     }
                 }
@@ -151,34 +157,56 @@ public:
                 request_it = std::next(request_it);
             }
 
-            return *it;
+            return *temp_list.begin();
         }
     public:
-        IdealCache(size_t size, std::vector<KeyT> request_list) : Cache<T, F, ListElem_t, KeyT>(size), request_list_(request_list) {}
+        IdealCache(size_t size, std::list<KeyT> request_list) : Cache<T, F, ListElem_t, KeyT>(size), request_list_(request_list) {}
 
-        bool lookup_update(KeyT key, F slow_get_page) override        
+        bool lookup_update(KeyT request_key, F slow_get_page) override        
         {
-            auto hit = hash_map_.find(key);
+            request_list_.pop_front();
+
+            auto hit = hash_map_.find(request_key);
+            bool is_hit = true;
             
             if (hit == hash_map_.end()) // key not found
             {
+                is_hit = false;
+
                 if (full())
                 {
-                    KeyT key = find_last_seen();
-                    
-                    auto hit = hash_map_.find(key);
+                    KeyT last_seen_key = find_last_seen(request_key);
+                    if (request_key != last_seen_key)
+                    {
+                        auto list_it = hash_map_.find(last_seen_key);
 
-                    hash_map_.erase(key);
-                    cache_.erase(hit->second);
+                        hash_map_.erase(last_seen_key);
+                        cache_.erase(list_it->second);
+                    }
                 }
                 
-                cache_.emplace_front(key, slow_get_page(key));
-                hash_map_.emplace(key, cache_.begin());
-
-                return false;
+                cache_.emplace_front(request_key, slow_get_page(request_key));
+                hash_map_.emplace(request_key, cache_.begin());
             }
-            
-            return true;  
+
+            return is_hit;  
+        }
+
+        void print() 
+        {
+            std::cout << "Cache:" << std::endl << "keys:";
+            for (auto hash_it = hash_map_.begin(); hash_it != hash_map_.end(); hash_it = std::next(hash_it))
+            {
+                std::cout << " " << get_key(hash_it);
+            }
+            std::cout << std::endl;
+
+            std::cout << "Request List:";
+            for (auto elem : request_list_)
+            {
+                std::cout << " " << elem;
+            }
+            std::cout << std::endl << std::endl;
         }
 
     }; // Ideal Cache class
