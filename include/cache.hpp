@@ -168,6 +168,7 @@ public:
 
             auto hit = hash_map_.find(request_key);
             bool is_hit = true;
+            bool need_insert = true;
             
             if (hit == hash_map_.end()) // key not found
             {
@@ -176,6 +177,7 @@ public:
                 if (full())
                 {
                     KeyT last_seen_key = find_last_seen(request_key);
+                    
                     if (request_key != last_seen_key)
                     {
                         auto list_it = hash_map_.find(last_seen_key);
@@ -183,10 +185,18 @@ public:
                         hash_map_.erase(last_seen_key);
                         cache_.erase(list_it->second);
                     }
+                    else 
+                    {
+                        need_insert = false;
+                    }
                 }
-                
-                cache_.emplace_front(request_key, slow_get_page(request_key));
-                hash_map_.emplace(request_key, cache_.begin());
+
+
+                if (need_insert)
+                {
+                    cache_.emplace_front(request_key, slow_get_page(request_key));
+                    hash_map_.emplace(request_key, cache_.begin());
+                }
             }
 
             return is_hit;  
