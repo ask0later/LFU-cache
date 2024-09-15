@@ -3,7 +3,7 @@
 #include <functional>
 
 namespace {
-    static int slow_get_page(int key)
+    int slow_get_page(int key)
     {
         return key;
     }
