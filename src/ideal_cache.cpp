@@ -1,39 +1,30 @@
 #include "cache.hpp"
 #include <iostream>
+#include <functional>
 
-int slow_get_page(int key);
+namespace {
+    static int slow_get_page(int key)
+    {
+        return key;
+    }
+} // namespace
 
-using func_t = int(int);
 
 int main()
 {
-    size_t cache_size = 0, request_nums = 0, ideal_hits = 0;
-
-    std::cin >> cache_size >> request_nums;
-
-    int key = 0;
-    std::list<int> request_list;
-
-    for (size_t i = 0; i < request_nums; i++)
-    {
-        std::cin >> key;
-        request_list.push_back(key);
-    }
-
-    caches::IdealCache<int, func_t> ideal_cache{cache_size, request_list};
+    auto pair = caches::get_input(std::cin);
     
-    for (auto it = request_list.begin(); it != request_list.end(); it = std::next(it))
+    std::list<int> request_list;
+    for (auto vector_elem : pair.second)
     {
-        if (ideal_cache.lookup_update(*it, slow_get_page))
-            ideal_hits++;
+        request_list.push_back(vector_elem);
     }
+
+    caches::IdealCache<int, std::function<int(int)>> ideal_cache{pair.first, request_list};
+
+    size_t ideal_hits = ideal_cache.get_hits(pair.second, slow_get_page);
 
     std::cout << ideal_hits << std::endl;
 
     return 0;
-}
-
-int slow_get_page(int key)
-{
-    return key;
 }
