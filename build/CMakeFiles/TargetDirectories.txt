@@ -1,0 +1,6 @@
+/home/arseniy/files/Other/cproga/cache_collab/LFU-cache/build/CMakeFiles/edit_cache.dir
+/home/arseniy/files/Other/cproga/cache_collab/LFU-cache/build/CMakeFiles/rebuild_cache.dir
+/home/arseniy/files/Other/cproga/cache_collab/LFU-cache/build/src/CMakeFiles/lfu_cache.dir
+/home/arseniy/files/Other/cproga/cache_collab/LFU-cache/build/src/CMakeFiles/ideal_cache.dir
+/home/arseniy/files/Other/cproga/cache_collab/LFU-cache/build/src/CMakeFiles/edit_cache.dir
+/home/arseniy/files/Other/cproga/cache_collab/LFU-cache/build/src/CMakeFiles/rebuild_cache.dir
