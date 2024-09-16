@@ -15,6 +15,8 @@ namespace caches
         std::vector<int> request_list{};
 
         is >> cache_size >> request_nums;
+
+        std::cout << "test commit\n";
         
         int request_key = 0;
         for (size_t i = 0; i < request_nums; i++)
