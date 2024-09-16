@@ -58,10 +58,8 @@ public:
             size_t hits = 0;
 
             for (auto vector_elem : request_list)
-            {
                 if (lookup_update(vector_elem, slow_get_page))
                     hits++;
-            }
 
             return hits;
         }

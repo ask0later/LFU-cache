@@ -27,6 +27,7 @@ namespace caches
         {
             return std::get<2>(*it);
         }
+
         static void set_count(ListIt it, const size_t count)
         {
             std::get<2>(*it) = count;
@@ -42,13 +43,8 @@ namespace caches
             auto next_it = std::next(list_it);
 
             if (next_it != cache_.begin() && next_it != cache_.end())
-            {
                 if (get_count(list_it) > get_count(next_it))
-                {
                     cache_.splice(list_it, cache_, next_it, std::next(next_it));
-                    //std::iter_swap(list_it, next_it);
-                }
-            }
 
             return;
         }
