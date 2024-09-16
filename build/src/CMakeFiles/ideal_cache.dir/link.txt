@@ -1,1 +1,0 @@
-/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/ideal_cache.dir/ideal_cache.cpp.o -o ideal_cache 

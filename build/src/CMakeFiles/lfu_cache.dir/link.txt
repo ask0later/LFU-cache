@@ -1,1 +1,0 @@
-/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/lfu_cache.dir/lfu_cache.cpp.o -o lfu_cache 
