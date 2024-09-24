@@ -28,6 +28,19 @@ namespace {
 
         return pair;
     }
+
+    size_t get_hits(std::vector<int> request_list, caches::LFUCache<int> cache)
+    {
+        size_t hits = 0;
+
+        for (auto vector_elem : request_list)
+        {
+            if (cache.lookup_update(vector_elem, slow_get_page))
+                hits++;
+        }
+
+        return hits;
+    }
 } // namespace
 
 int main()
@@ -36,7 +49,7 @@ int main()
 
     caches::LFUCache<int> lfu_cache{cache_size};
 
-    size_t lfu_hits = lfu_cache.get_hits(requests, slow_get_page);
+    size_t lfu_hits = get_hits(requests, lfu_cache);
 
     std::cout << lfu_hits << std::endl;
 
