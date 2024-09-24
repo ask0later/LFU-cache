@@ -23,6 +23,9 @@ namespace caches
             return cache_.size() == size_;
         }
 
+public:
+        LRUCache(const size_t size) : size_(size) {}
+
         template <typename F>
         bool lookup_update(KeyT request_key, F slow_get_page) 
         { 
@@ -47,21 +50,6 @@ namespace caches
                 cache_.splice(cache_.begin(), cache_, list_it, std::next(list_it));
             
             return true;
-        }
-
-public:
-        LRUCache(const size_t size) : size_(size) {}
-
-        template <typename F>
-        size_t get_hits(std::vector<int> request_list, F slow_get_page)
-        {
-            size_t hits = 0;
-
-            for (auto vector_elem : request_list)
-                if (lookup_update(vector_elem, slow_get_page))
-                    hits++;
-
-            return hits;
         }
 
         void print() const

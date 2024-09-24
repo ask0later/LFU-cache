@@ -1,7 +1,7 @@
 #include "lfu_cache.hpp"
 #include <iostream>
-#include <functional>
 #include <vector>
+#include <cassert>
 
 namespace {
     int slow_get_page(int key)
@@ -9,48 +9,36 @@ namespace {
         return key;
     }
 
-    template <typename KeyT = int>
-    std::pair<size_t, std::vector<KeyT>> get_input(std::istream &is)
-    {
-        size_t cache_size = 0, request_nums = 0;
-        std::vector<KeyT> request_list{};
-
-        is >> cache_size >> request_nums;
-        
-        KeyT request_key = 0;
-        for (size_t i = 0; i < request_nums; i++)
-        {
-            is >> request_key;
-            request_list.push_back(request_key);
-        }
-
-        std::pair<size_t, std::vector<KeyT>> pair{cache_size, request_list};
-
-        return pair;
-    }
-
-    size_t get_hits(std::vector<int> request_list, caches::LFUCache<int> cache)
+    size_t get_hits(size_t num_requests, caches::LFUCache<int> cache)
     {
         size_t hits = 0;
 
-        for (auto vector_elem : request_list)
+        for (size_t i = 0; i < num_requests; i++)
         {
-            if (cache.lookup_update(vector_elem, slow_get_page))
+            int elem = 0;
+            std::cin >> elem;
+            assert(std::cin.good());
+
+            if (cache.lookup_update(elem, slow_get_page))
                 hits++;
         }
 
         return hits;
     }
+
 } // namespace
 
 int main()
 {
-    auto [cache_size, requests] = get_input(std::cin);
+    size_t cache_size = 0;
+    size_t num_requests = 0;
+
+    std::cin >> cache_size >> num_requests;
+    assert(std::cin.good());
 
     caches::LFUCache<int> lfu_cache{cache_size};
 
-    size_t lfu_hits = get_hits(requests, lfu_cache);
-
+    size_t lfu_hits = get_hits(num_requests, lfu_cache);
     std::cout << lfu_hits << std::endl;
 
     return 0;

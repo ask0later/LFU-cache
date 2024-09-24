@@ -3,6 +3,7 @@
 #include <functional>
 #include <vector>
 
+
 namespace
 {
     int slow_get_page(int key)
@@ -29,8 +30,19 @@ namespace
 
         return pair;
     }
-} // namespace
 
+    size_t get_hits(std::vector<int> request_list, caches::IdealCache<int> cache)
+    {
+        size_t hits = 0;
+
+        for (auto vector_elem : request_list)
+            if (cache.lookup_update(vector_elem, slow_get_page))
+                hits++;
+
+        return hits;
+    }
+
+} // namespace
 
 int main()
 {
@@ -38,7 +50,7 @@ int main()
     std::list<int> request_list(requests_vector.begin(), requests_vector.end());
 
     caches::IdealCache<int> ideal_cache{cache_size, request_list};
-    size_t ideal_hits = ideal_cache.get_hits(requests_vector, slow_get_page);
+    size_t ideal_hits = get_hits(requests_vector, ideal_cache);
 
     std::cout << ideal_hits << std::endl;
 

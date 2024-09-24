@@ -56,18 +56,6 @@ namespace caches
 
 public:
         IdealCache(size_t size, std::list<KeyT> request_list) : size_(size), request_list_(request_list) {}
-        
-        template <typename F>
-        size_t get_hits(std::vector<int> request_list, F slow_get_page)
-        {
-            size_t hits = 0;
-
-            for (auto vector_elem : request_list)
-                if (lookup_update(vector_elem, slow_get_page))
-                    hits++;
-
-            return hits;
-        }
 
         template <typename F>
         bool lookup_update(KeyT request_key, F slow_get_page)        
