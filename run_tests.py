@@ -4,7 +4,7 @@ import sys
 
 cache = 	sys.argv[1]
 binary = 	cache + "_cache"
-test_dir = 	"test/" + cache + "_tests/"
+test_dir = 	"tests/" + cache + "_tests/"
 program = "./build/src/" + binary
 
 num_test = 1

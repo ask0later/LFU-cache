@@ -3,7 +3,6 @@
 #include <functional>
 #include <vector>
 
-
 namespace
 {
     int slow_get_page(int key)

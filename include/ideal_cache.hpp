@@ -8,7 +8,6 @@
 
 namespace caches
 {
-
     template <typename T, typename KeyT = int>
     class IdealCache
     {
@@ -105,5 +104,4 @@ public:
             std::cout << std::endl << std::endl;
         }
     };
-
 } // namespace caches

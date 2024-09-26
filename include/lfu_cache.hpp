@@ -23,6 +23,11 @@ namespace caches
             return std::get<0>(*it);
         }
 
+        static T get_data(ListIt it)
+        {
+            return std::get<1>(*it);
+        }
+
         static size_t get_count(ListIt it)
         {
             return std::get<2>(*it);
@@ -66,6 +71,27 @@ namespace caches
         
 public:
         LFUCache(const size_t size) : size_(size) {}
+
+        template <typename F>
+        T lookup(KeyT request_key, F slow_get_page)
+        {
+            auto hit = hash_map_.find(request_key);
+
+            if (hit == hash_map_.end())
+            {
+                process_hash_miss(request_key, slow_get_page);
+                return get_data(cache_.begin());
+            }
+
+            auto list_it = hit->second;
+            T target_data = get_data(list_it);
+
+            set_count(list_it, get_count(list_it) + 1);
+
+            process_hash_hit(list_it);
+
+            return target_data;
+        }
 
         template <typename F>
         bool lookup_update(KeyT request_key, F slow_get_page)
