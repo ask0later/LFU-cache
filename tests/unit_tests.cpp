@@ -18,7 +18,8 @@ Data slow_get_page(int key)
 {
     Data a;
     a.key = key;
-    a.str = (key, '=');
+    std::string tmp (key, '=');
+    a.str = tmp;
     a.data = key * 2;
 
     return a;
@@ -78,6 +79,4 @@ TEST(LFU_LOOKUP, test_2)
         ASSERT_EQ(requests[i].data, target_data.data);
         ASSERT_EQ(requests[i].str, target_data.str);
     }
-
 }
-
