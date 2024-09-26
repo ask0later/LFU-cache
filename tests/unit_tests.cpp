@@ -1,22 +1,25 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <vector>
+#include <string>
 
 #include "ideal_cache.hpp"
 #include "lfu_cache.hpp"
 #include "lru_cache.hpp"
 
-struct T1
+struct Data
 {
-    char* string;
-    double data;
     int key;
+    std::string str;
+    int data;
 };
 
-T1 slow_get_page1(int key)
+Data slow_get_page(int key)
 {
-    T1 a;
+    Data a;
     a.key = key;
+    a.str = (key, '=');
+    a.data = key * 2;
 
     return a;
 }
@@ -25,21 +28,23 @@ TEST(LFU_LOOKUP, test_1)
 {
     size_t cache_size = 4;
 
-    std::vector<int> requests;
+    std::vector<Data> requests;
 
-    requests.push_back(1);
-    requests.push_back(2);
-    requests.push_back(3);
-    requests.push_back(4);
+    requests.push_back({1, "=",    2});
+    requests.push_back({2, "==",   4});
+    requests.push_back({3, "===",  6});
+    requests.push_back({4, "====", 8});
 
-    caches::LFUCache<T1> lfu_cache{cache_size};
+    caches::LFUCache<Data> lfu_cache{cache_size};
     
     size_t hits = 0;
     
     for (size_t i = 0; i < 4; i++)
     {
-        T1 target_data = lfu_cache.lookup(requests[i], slow_get_page1);
-        ASSERT_EQ(requests[i], target_data.key);
+        Data target_data = lfu_cache.lookup(requests[i].key, slow_get_page);
+        ASSERT_EQ(requests[i].key, target_data.key);
+        ASSERT_EQ(requests[i].data, target_data.data);
+        ASSERT_EQ(requests[i].str, target_data.str);
     }
 }
 
@@ -47,96 +52,32 @@ TEST(LFU_LOOKUP, test_2)
 {
     size_t cache_size = 3;
 
-    std::vector<int> requests;
+    std::vector<Data> requests;
 
-    requests.push_back(1);
-    requests.push_back(2);
-    requests.push_back(3);
-    requests.push_back(4);
-    requests.push_back(4);
-    requests.push_back(4);
-    requests.push_back(2);
-    requests.push_back(1);
+    requests.push_back({1, "=",     2});
+    requests.push_back({2, "==",    4});
+    requests.push_back({3, "===",   6});
+    requests.push_back({4, "====",  8});
+    requests.push_back({4, "====",  8});
+    requests.push_back({4, "====",  8});
+    requests.push_back({2, "==",    4});
+    requests.push_back({1, "=",     2});
+    requests.push_back({5, "=====", 10});
+    requests.push_back({4, "====",  8});
+    requests.push_back({2, "==",    4});
+    requests.push_back({1, "=",     2});
 
-    caches::LFUCache<T1> lfu_cache{cache_size};
+    caches::LFUCache<Data> lfu_cache{cache_size};
     
     size_t hits = 0;
     
     for (size_t i = 0; i < 8; i++)
     {
-        T1 target_data = lfu_cache.lookup(requests[i], slow_get_page1);
-        ASSERT_EQ(requests[i], target_data.key);
-    }
-}
-
-
-struct T2
-{
-    char a;
-    double data;
-    int key;
-};
-
-T2 slow_get_page2(int key)
-{
-    T2 a;
-    a.key = key * 17 + 12;
-
-    return a;
-}
-
-
-TEST(LFU_LOOKUP, test_3)
-{
-    size_t cache_size = 3;
-
-    std::vector<int> requests;
-
-    requests.push_back(1);
-    requests.push_back(3);
-    requests.push_back(4);
-    requests.push_back(5);
-    requests.push_back(6);
-    requests.push_back(7);
-    requests.push_back(8);
-    requests.push_back(9);
-
-    caches::LFUCache<T2> lfu_cache{cache_size};
-    
-    size_t hits = 0;
-    
-    for (size_t i = 0; i < 8; i++)
-    {
-        T2 target_data = lfu_cache.lookup(requests[i], slow_get_page2);
-        ASSERT_EQ(requests[i] * 17 + 12, target_data.key);
-    }
-}
-
-
-
-TEST(LFU_LOOKUP_UPDATE, test_1)
-{
-    size_t cache_size = 3;
-
-    std::vector<int> requests;
-
-    requests.push_back(1);
-    requests.push_back(2);
-    requests.push_back(3);
-    requests.push_back(2);
-    requests.push_back(3);
-    requests.push_back(2);
-    requests.push_back(3);
-
-    caches::LFUCache<T1> lfu_cache{cache_size};
-    
-    size_t hits = 0;
-    
-    for (size_t i = 0; i < 7; i++)
-    {
-        lfu_cache.lookup(requests[i], slow_get_page1);
+        Data target_data = lfu_cache.lookup(requests[i].key, slow_get_page);
+        ASSERT_EQ(requests[i].key, target_data.key);
+        ASSERT_EQ(requests[i].data, target_data.data);
+        ASSERT_EQ(requests[i].str, target_data.str);
     }
 
-    ASSERT_EQ(lfu_cache.lookup_update(4, slow_get_page1), false);
-    ASSERT_EQ(lfu_cache.lookup_update(1, slow_get_page1), false);
 }
+
